@@ -58,7 +58,19 @@ Run batch inference on network signatures:
 
 python main_sub_multi.py
 
+Model Artifacts & Manifold Geometry
 
+The system relies on pre-trained topological weights and scalar parameters stored in the models2/ directory. These artifacts define the manifold space used to represent and analyze network signatures.
+
+Required Artifacts
+File Name	Description
+som_model.joblib	Trained MiniSom object containing the learned topological grid
+som_weights1.npy	Raw NumPy weight matrix for high-speed, vectorized manifold projection
+centroid_feature_map.joblib	Mapping of SOM nodes to latent regime assignments
+scaler.joblib	StandardScaler parameters used for signal normalization
+medians.joblib	Feature-wise medians for robust imputation of missing telemetry
+policy_to_bit.joblib	Encoding dictionary for bitmap transformation of DpiPolicy
+numeric_cols.joblib	Definitive feature ordering to ensure consistent manifold projection
 **Key Research Artifacts**
 
 ## Key Research Artifacts: Manifold Interpretation
