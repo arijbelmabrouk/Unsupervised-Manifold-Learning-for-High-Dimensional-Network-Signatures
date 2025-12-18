@@ -16,7 +16,7 @@ app = FastAPI(
 )
 
 # === Define Input Model ===
-class CustomerFeatures(BaseModel):
+class FeatureVectors(BaseModel):
     DpiPolicy: Optional[List[str]] = []
     contentType: Optional[List[str]] = []
     IpProtocol: Optional[List[str]] = []
@@ -27,7 +27,7 @@ class CustomerFeatures(BaseModel):
     transationDuration: float = 0.0
 
 # === Define Output Model ===
-class OfferRecommendation(BaseModel):
+class ProjectionOutput(BaseModel):
     cluster_id: List[str]
 
 # === Load saved models2 ===
@@ -104,7 +104,7 @@ def project_to_manifold(customer_features, som_weights, centroid_feature_map, so
     return cluster_id
 
 # === Preprocess customer data function ===
-def preprocess_customer_data(customer: CustomerFeatures) -> np.ndarray:
+def preprocess_customer_data(customer: FeatureVectors) -> np.ndarray:
     # Create a dictionary to convert to DataFrame
     data_dict = {}
     
@@ -161,8 +161,8 @@ def preprocess_customer_data(customer: CustomerFeatures) -> np.ndarray:
     return scaled_data[0]  # Return first row as numpy array
 
 # === API endpoint for recommendations ===
-@app.post("/recommend", response_model=OfferRecommendation)
-def get_recommendations(customer: CustomerFeatures):
+@app.post("/classify", response_model=ProjectionOutput)
+def get_recommendations(customer: FeatureVectors):
     try:
         # Check if the customer has no meaningful input
         is_empty = (
@@ -191,7 +191,7 @@ def get_recommendations(customer: CustomerFeatures):
 def read_root():
     return {"message": "Welcome to the Manifold Projection Service", 
             "docs": "/docs",
-            "usage": "POST your customer data to /recommend to get offer recommendations"}
+            "usage": "POST your customer data to /classify to get offer recommendations"}
 
 # === Run the API server when this script is executed directly ===
 if __name__ == "__main__":
