@@ -9,7 +9,7 @@ import os
 
 # === Load saved models ===
 def load_models():
-    global som_weights, cluster_offers, policy_to_bit, content_to_bit, proto_to_bit, scaler, medians, numeric_cols
+    global som_weights, centroid_feature_map, policy_to_bit, content_to_bit, proto_to_bit, scaler, medians, numeric_cols
     
     # Load SOM model and extract weights
     try:
@@ -26,12 +26,12 @@ def load_models():
             raise RuntimeError("Neither SOM model nor weights file could be found")
     
     try:
-        cluster_offers = joblib.load('models2/cluster_offers.joblib')
-        print(f"Loaded {len(cluster_offers)} cluster offer mappings")
+        centroid_feature_map = joblib.load('models2/centroid_feature_map.joblib')
+        print(f"Loaded {len(centroid_feature_map)} cluster offer mappings")
     except FileNotFoundError:
-        print("Warning: cluster_offers.joblib not found. Using default fallback.")
+        print("Warning: centroid_feature_map.joblib not found. Using default fallback.")
         # Fallback to hardcoded values if file not found
-        cluster_offers = {i: [] for i in range(100)}  # Initialize with empty lists
+        centroid_feature_map = {i: [] for i in range(100)}  # Initialize with empty lists
     
     # Load encoding mappings
     policy_to_bit = joblib.load('models2/policy_to_bit.joblib')
@@ -51,7 +51,7 @@ def load_models():
 
 # === Define the recommendation function ===
 
-def recommend_nbo(customer_features, som_weights, cluster_offers, som_dims=(10, 10)):
+def project_to_manifold(customer_features, som_weights, centroid_feature_map, som_dims=(10, 10)):
     
     expected_features = som_weights.shape[2]
     if len(customer_features) != expected_features:
@@ -69,10 +69,10 @@ def recommend_nbo(customer_features, som_weights, cluster_offers, som_dims=(10, 
     bmu_index = np.unravel_index(np.argmin(distances), distances.shape)
     bmu_row, bmu_col = bmu_index
     cluster_id = bmu_row * som_dims[1] + bmu_col
-    recommended_offers = cluster_offers.get(cluster_id, [])
-    if not recommended_offers:
+    cluster_id = centroid_feature_map.get(cluster_id, [])
+    if not cluster_id:
         return ['F3000G100M', 'F1200G50M', 'F3000G200M']
-    return recommended_offers
+    return cluster_id
 
 # === Preprocess customer data function ===
 def preprocess_customer_data(customer_data):
@@ -162,7 +162,7 @@ def setup_database(db_name="recommendations.db"):
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS customer_recommendations (
             SubscriberID TEXT PRIMARY KEY,
-            recommended_offers TEXT,
+            cluster_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -208,9 +208,9 @@ def process_all_customers(df, batch_size=1000):
                     offers = ['F3000G100M', 'F1200G50M', 'F3000G200M']
                 else:
                     processed_features = preprocess_customer_data(subscriber_data)
-                    offers = recommend_nbo(processed_features, som_weights, cluster_offers)
+                    offers = project_to_manifold(processed_features, som_weights, centroid_feature_map)
                 cursor.execute(
-                    "INSERT OR REPLACE INTO customer_recommendations (SubscriberID, recommended_offers) VALUES (?, ?)",
+                    "INSERT OR REPLACE INTO customer_recommendations (SubscriberID, cluster_id) VALUES (?, ?)",
                     (subscriber_id, json.dumps(offers))
                 )
                 success_count += 1
@@ -237,7 +237,7 @@ def export_to_csv(db_name="recommendations.db", output_file="customer_recommenda
     conn.close()
     
     # Parse JSON strings back to lists for better CSV format
-    recommendations_df['recommended_offers'] = recommendations_df['recommended_offers'].apply(
+    recommendations_df['cluster_id'] = recommendations_df['cluster_id'].apply(
         lambda x: ', '.join(json.loads(x))
     )
     
