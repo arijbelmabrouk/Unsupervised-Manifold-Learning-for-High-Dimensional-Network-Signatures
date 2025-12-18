@@ -10,7 +10,7 @@ import os
 
 # === Create FastAPI app ===
 app = FastAPI(
-    title="Next Best Offer API",
+    title="Manifold Projection Service",
     description="API for recommending next best offers based on customer features",
     version="1.0.0"
 )
@@ -28,12 +28,12 @@ class CustomerFeatures(BaseModel):
 
 # === Define Output Model ===
 class OfferRecommendation(BaseModel):
-    recommended_offers: List[str]
+    cluster_id: List[str]
 
 # === Load saved models2 ===
 @app.on_event("startup")
 def load_models2():
-    global som_weights, cluster_offers, policy_to_bit, content_to_bit, proto_to_bit, scaler, medians, numeric_cols
+    global som_weights, centroid_feature_map, policy_to_bit, content_to_bit, proto_to_bit, scaler, medians, numeric_cols
     
     # Load SOM model and extract weights
     try:
@@ -50,12 +50,12 @@ def load_models2():
             raise RuntimeError("Neither SOM model nor weights file could be found")
     
     try:
-        cluster_offers = joblib.load('models2/cluster_offers.joblib')
-        print(f"Loaded {len(cluster_offers)} cluster offer mappings")
+        centroid_feature_map = joblib.load('models2/centroid_feature_map.joblib')
+        print(f"Loaded {len(centroid_feature_map)} cluster offer mappings")
     except FileNotFoundError:
-        print("Warning: cluster_offers.joblib not found. Using default fallback.")
+        print("Warning: centroid_feature_map.joblib not found. Using default fallback.")
         # Fallback to hardcoded values if file not found
-        cluster_offers = {i: [] for i in range(100)}  # Initialize with empty lists
+        centroid_feature_map = {i: [] for i in range(100)}  # Initialize with empty lists
     
     # Load encoding mappings
     policy_to_bit = joblib.load('models2/policy_to_bit.joblib')
@@ -74,7 +74,7 @@ def load_models2():
     print("All models2 loaded successfully!")
 
 # === Define the recommendation function ===
-def recommend_nbo(customer_features, som_weights, cluster_offers, som_dims=(10, 10)):
+def project_to_manifold(customer_features, som_weights, centroid_feature_map, som_dims=(10, 10)):
     # Ensure correct dimensions
     expected_features = som_weights.shape[2]
     if len(customer_features) != expected_features:
@@ -96,12 +96,12 @@ def recommend_nbo(customer_features, som_weights, cluster_offers, som_dims=(10, 
     cluster_id = bmu_row * som_dims[1] + bmu_col
     
     # Get recommended offers for this cluster
-    recommended_offers = cluster_offers.get(cluster_id, [])
+    cluster_id = centroid_feature_map.get(cluster_id, [])
     
     # Return top 2-3 offers or fallback to default offers if none found
-    if not recommended_offers:
+    if not cluster_id:
         return ['F3000G100M', 'F1200G50M', 'F3000G200M']  # Default offers
-    return recommended_offers
+    return cluster_id
 
 # === Preprocess customer data function ===
 def preprocess_customer_data(customer: CustomerFeatures) -> np.ndarray:
@@ -177,19 +177,19 @@ def get_recommendations(customer: CustomerFeatures):
         )
         if is_empty:
             # Return default recommendations
-            return {"recommended_offers": ['F3000G100M', 'F1200G50M', 'F3000G200M']}
+            return {"cluster_id": ['F3000G100M', 'F1200G50M', 'F3000G200M']}
         
         # Otherwise proceed with preprocessing and SOM recommendation
         processed_features = preprocess_customer_data(customer)
-        offers = recommend_nbo(processed_features, som_weights, cluster_offers)
-        return {"recommended_offers": offers}
+        offers = project_to_manifold(processed_features, som_weights, centroid_feature_map)
+        return {"cluster_id": offers}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
 
 # === Root endpoint ===
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Next Best Offer API", 
+    return {"message": "Welcome to the Manifold Projection Service", 
             "docs": "/docs",
             "usage": "POST your customer data to /recommend to get offer recommendations"}
 
