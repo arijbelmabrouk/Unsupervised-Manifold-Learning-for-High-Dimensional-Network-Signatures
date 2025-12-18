@@ -31,10 +31,15 @@ To handle high-dimensional categorical metadata (DPI policies, content-types), w
 ## Project Structure
 
 ├── models2/ # Serialized Model Artifacts (Joblib)
+
 ├── results/ # U-Matrix and Quantization Error Diagnostics
+
 ├── Dockerfile # Reproducible Research Environment
+
 ├── notebook.ipynb # Derivations, Training, and Fidelity Analysis
+
 ├── main_sub_multi.py # Batch Manifold Projection Pipeline
+
 └── requirements.txt # System Dependencies
 
 **Implementation Highlights**
@@ -59,17 +64,4 @@ python main_sub_multi.py
 - U-Matrix Visualization: Reveals clusters of behavior based on topological distance.  
 - Quantization Decay: Monitoring convergence stability during competitive training.  
 - ![U-Matrix](results/u_matrix.png)
-
----
-
-### 4. The "Missing Piece" (Your Homework)
-You have a folder called `results/`. **You must upload a U-Matrix plot (image) into that folder.** If Shihada clicks this repo and sees the math in the README but no **Visual Proof**, he will think you didn't actually run it.  
-
-* **Find the U-Matrix image** generated in your notebook.  
-* **Name it `u_matrix.png`.**  
-* **Upload it to GitHub**.  
-* **Add this line to the README under "Key Research Artifacts":**  
-  `![U-Matrix](results/u_matrix.png)`
-
-**Does this new README look like something you'd see in a networking lab, or are you still worried it's too technical?** (Hint: In Basem's lab, there is no such thing as "too technical.")
 
