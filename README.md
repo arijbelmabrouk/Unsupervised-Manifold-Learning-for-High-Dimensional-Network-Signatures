@@ -38,7 +38,7 @@ To handle high-dimensional categorical metadata (DPI policies, content-types), w
 
 ├── notebook.ipynb # Derivations, Training, and Fidelity Analysis
 
-├── main_sub_multi.py # Batch Manifold Projection Pipeline
+├── batch_projection_pipeline.py # Batch Manifold Projection Pipeline
 
 └── requirements.txt # System Dependencies
 
@@ -56,7 +56,7 @@ docker build -t net-manifold-som .
 
 Run batch inference on network signatures:
 
-python main_sub_multi.py
+python batch_projection_pipeline.py
 
 ## Model Artifacts & Manifold Geometry
 
