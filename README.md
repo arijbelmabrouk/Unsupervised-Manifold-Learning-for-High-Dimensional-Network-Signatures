@@ -61,7 +61,18 @@ python main_sub_multi.py
 
 **Key Research Artifacts**
 
-- U-Matrix Visualization: Reveals clusters of behavior based on topological distance.  
-- Quantization Decay: Monitoring convergence stability during competitive training.  
-- ![U-Matrix](results/u_matrix.png)
+## Key Research Artifacts: Manifold Interpretation
 
+The following visualizations illustrate the topological preservation and feature-space correlation discovered by the SOM:
+
+### 1. Global Weight Distribution
+The latent manifold reveals three distinct regime clusters (1, 2, 3) representing different classes of network traffic signatures.
+![Global Weight Manifold](results/global_weight_manifold.png)
+
+### 2. Feature Component Planes (C-Planes)
+By decomposing the manifold into individual feature planes (IpProtocol, Bytes from Client, etc.), we observe the non-linear correlations that drive cluster formation. This is critical for understanding how specific system constraints (e.g., bandwidth vs. protocol type) influence the latent representation.
+![Component Planes](results/feature_component_planes.png)
+
+### 3. Multivariate Latent Projections
+Three-feature combination visualizations showing the interaction between high-dimensional features across the 2D lattice, confirming the stability of the topology-preserving mapping.
+![Multivariate Projections](results/multivariate_latent_projections.png)
